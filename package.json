@@ -2,10 +2,11 @@
   "name": "terminal-agent",
   "version": "1.0.0",
   "scripts": {
-    "dev": "bun run --cwd frontend dev & bun run --cwd backend dev",
-    "start": "concurrently \"npm run build --prefix frontend\" \"npm run start --prefix backend\""
-  },
-  "devDependencies": {
-    "concurrently": "^9.2.1"
+    "dev:server": "bun run --cwd backend dev",
+    "dev:client": "bun run --cwd frontend dev",
+    "dev": "bun run --parallel dev:server dev:client",
+    "start:server": "bun run --cwd backend start",
+    "start:client": "bun run --cwd frontend build",
+    "start": "bun run --parallel start:server start:client"
   }
 }

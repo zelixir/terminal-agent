@@ -588,3 +588,10 @@ function mapFinishReason(finishReason: string | null | undefined): LanguageModel
   }
 }
 
+export default function dashscope(modelId: string): DashscopeChatLanguageModel {
+  const apiKey = process.env.DASHSCOPE_API_KEY;
+  if (!apiKey) throw new Error('DASHSCOPE_API_KEY environment variable is not set');
+  const baseUrl = process.env.DASHSCOPE_BASE_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+  return new DashscopeChatLanguageModel(modelId, apiKey, baseUrl);
+}
+

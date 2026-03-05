@@ -2,12 +2,13 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { ArrowLeft, Send, Terminal as TerminalIcon, MessageSquare, CheckCircle, XCircle, Shield, Plus, GitFork, ChevronDown, History } from 'lucide-react'
+import { ArrowLeft, Send, Terminal as TerminalIcon, MessageSquare, CheckCircle, XCircle, Shield, Plus, GitFork, ChevronDown, History, Bug } from 'lucide-react'
 import TerminalPanel from '../components/TerminalPanel'
 import ChatMessage from '../components/ChatMessage'
 import AutoApprovalManager from '../components/AutoApprovalManager'
 import ApprovalDialog from '../components/ApprovalDialog'
 import HistoryPanel from '../components/HistoryPanel'
+import { Button } from '../components/ui/button'
 import { Server, ApprovalRequest, Conversation } from '../types'
 
 export default function Connection() {
@@ -28,6 +29,7 @@ export default function Connection() {
   const [promptHistory, setPromptHistory] = useState<string[]>([])
   const [promptHistoryIndex, setPromptHistoryIndex] = useState(-1)
   const [savedInput, setSavedInput] = useState('')
+  const [debugMode, setDebugMode] = useState(() => localStorage.getItem('debug_mode') === '1')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const agentWsRef = useRef<WebSocket | null>(null)
@@ -344,20 +346,36 @@ export default function Connection() {
               <span className="font-medium text-sm">AI 助手</span>
             </div>
             <div className="flex items-center gap-1">
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  const next = !debugMode
+                  setDebugMode(next)
+                  localStorage.setItem('debug_mode', next ? '1' : '0')
+                }}
+                title={debugMode ? '关闭调试模式' : '开启调试模式'}
+                className={debugMode ? 'text-yellow-400' : ''}
+              >
+                <Bug className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setShowHistory(!showHistory)}
                 title="历史记录"
-                className={`p-1 rounded-lg transition-colors ${showHistory ? 'text-blue-400 bg-gray-800' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
+                className={showHistory ? 'text-blue-400' : ''}
               >
                 <History className="w-4 h-4" />
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={handleNewConversation}
                 title="新对话"
-                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-gray-800 transition-colors"
               >
                 <Plus className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           </div>
           
@@ -384,6 +402,7 @@ export default function Connection() {
                   sessionId={sessionId}
                   serverId={Number(serverId)}
                   onAddSessionApproval={handleAddSessionApproval}
+                  debugMode={debugMode}
                 />
               ))}
               {isLoading && (

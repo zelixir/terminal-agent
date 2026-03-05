@@ -100,6 +100,39 @@ export function getScreenContent(sessionId: string): string {
   return stripAnsi(session.screenBuffer.slice(-50).join(""));
 }
 
+/**
+ * Execute a command via a dedicated SSH exec channel on the existing session client.
+ * IMPORTANT: Both stdout and stderr must be consumed to prevent the SSH channel's
+ * close event from stalling (ssh2 buffers unread data causing backpressure).
+ */
+export function execOnSession(
+  sessionId: string,
+  command: string,
+  onData: (text: string) => void
+): Promise<{ exitCode: number | null }> {
+  const session = sessions.get(sessionId);
+  if (!session?.client) return Promise.reject(new Error("No SSH client for session"));
+
+  return new Promise((resolve, reject) => {
+    session.client.exec(command, (err, stream) => {
+      if (err) return reject(err);
+
+      stream.on("close", (code: number | null) => {
+        resolve({ exitCode: code ?? null });
+      });
+
+      stream.on("data", (data: Buffer) => {
+        onData(stripAnsi(data.toString()));
+      });
+
+      // MUST consume stderr — otherwise ssh2 may never fire the close event
+      stream.stderr.on("data", (data: Buffer) => {
+        onData(stripAnsi(data.toString()));
+      });
+    });
+  });
+}
+
 export async function runCommandAndWait(
   sessionId: string,
   command: string,
